@@ -67,8 +67,8 @@ document.addEventListener('DOMContentLoaded', () => {
       hour: hour.value,
       symptom: symptom.value
     }
-    console.log(newDate)
-    // 
+
+    // In indexDB transactions are used
     let transaction = DB.transaction(['dating'], 'readwrite')
     let objectStore = transaction.objectStore('dating')
     
@@ -99,7 +99,6 @@ document.addEventListener('DOMContentLoaded', () => {
     objectStore.openCursor().onsuccess = function(e) {
       // Cursor is going to be in the indicated register to access the data 
       let cursor = e.target.result
-      console.log(cursor)
 
       if(cursor) {
         let  dateHTML = document.createElement('li')
@@ -113,10 +112,56 @@ document.addEventListener('DOMContentLoaded', () => {
         <p class="font-weight-bold"> Hour: <span class="font-weight-normal">${cursor.value.hour}</span></p>
         <p class="font-weight-bold"> Symptom: <span class="font-weight-normal">${cursor.value.symptom}</span></p>
         `
+        // Delete button
+        const deleteButton = document.createElement('button')
+        deleteButton.classList.add('delete', 'btn', 'btn-danger')
+        deleteButton.innerHTML = '<span aria-hidden="true">x</span> Borrar'
+        deleteButton.onclick = delateDate
+        dateHTML.appendChild(deleteButton)
 
         // append to father
         dating.appendChild(dateHTML)
+        
+        // Check the next registers
         cursor.continue()
+
+      } else {
+        if(!dating.firstChild) {
+          // When there are no registers
+          headingAdminister.textContent = 'Agregar citas para comenzar'
+          let list = document.createElement('p')
+          list.classList.add('text-center')
+          list.textContent = 'No hay registros'
+          dating.appendChild(list)
+        } else {
+          headingAdminister.textContent = 'Administra tus citas'
+        }
+      }
+    }
+  }
+
+  function delateDate(e) {
+    let dateID = Number(e.target.parentElement.getAttribute('data-date-id'))
+    
+    // In indexDB transactions are used
+    let transaction = DB.transaction(['dating'], 'readwrite')
+    let objectStore = transaction.objectStore('dating')
+    
+    let request = objectStore.delete(dateID)
+
+    transaction.oncomplete = () => {
+      e.target.parentElement.parentElement.removeChild(e.target.parentElement)
+      console.log(`Se elimino la cita con el ID: ${dateID}`)
+
+      if(!dating.firstChild) {
+        // When there are no registers
+        headingAdminister.textContent = 'Agregar citas para comenzar'
+        let list = document.createElement('p')
+        list.classList.add('text-center')
+        list.textContent = 'No hay registros'
+        dating.appendChild(list)
+      } else {
+        headingAdminister.textContent = 'Administra tus citas'
       }
     }
   }
