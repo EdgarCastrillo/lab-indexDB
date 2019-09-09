@@ -50,4 +50,37 @@ document.addEventListener('DOMContentLoaded', () => {
     objectStore.createIndex('hour', 'hour', { unique: false })
     objectStore.createIndex('symptom', 'symptom', { unique: false })
   }
+
+  // When the form is sent
+  form.addEventListener('submit', addData)
+
+  function addData(e) {
+    e.preventDefault()
+
+    const newDate = {
+      pet: petName.value,
+      client: clientName.value,
+      telefon: telefon.value,
+      date: date.value,
+      hour: hour.value,
+      symptom: symptom.value
+    }
+    console.log(newDate)
+    // 
+    let transaction = DB.transaction(['dating'], 'readwrite')
+    let objectStore = transaction.objectStore('dating')
+    console.log(objectStore)
+    let request = objectStore.add(newDate)
+    console.log(request)
+
+    request.onsuccess = () => {
+      form.reset()
+    }
+    transaction.oncomplete = () => {
+      console.log('Cita agregada')
+    }
+    transaction.onerror = () => {
+      console.log('Hubo un error')
+    }
+  }
 })
