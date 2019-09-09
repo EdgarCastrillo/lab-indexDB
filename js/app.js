@@ -31,6 +31,8 @@ document.addEventListener('DOMContentLoaded', () => {
     // Assign the database
     DB = createDB.result
     console.log(DB)
+
+    showDating()
   }
 
   // This method only run once
@@ -69,18 +71,54 @@ document.addEventListener('DOMContentLoaded', () => {
     // 
     let transaction = DB.transaction(['dating'], 'readwrite')
     let objectStore = transaction.objectStore('dating')
-    console.log(objectStore)
+    
     let request = objectStore.add(newDate)
-    console.log(request)
 
     request.onsuccess = () => {
       form.reset()
     }
     transaction.oncomplete = () => {
       console.log('Cita agregada')
+      showDating()
     }
     transaction.onerror = () => {
       console.log('Hubo un error')
     }
   }
+
+  function showDating() {
+    // Clean previous dating
+    while(dating.firstChild) {
+      dating.removeChild(dating.firstChild)
+    }
+
+    // Create a objectStore
+    let objectStore = DB.transaction('dating').objectStore('dating')
+
+    // Return a request
+    objectStore.openCursor().onsuccess = function(e) {
+      // Cursor is going to be in the indicated register to access the data 
+      let cursor = e.target.result
+      console.log(cursor)
+
+      if(cursor) {
+        let  dateHTML = document.createElement('li')
+        dateHTML.setAttribute('data-date-id', cursor.value.key)
+        dateHTML.classList.add('list-group-item')
+        dateHTML.innerHTML = `
+        <p class="font-weight-bold"> Mascota: <span class="font-weight-normal">${cursor.value.pet}</span></p>
+        <p class="font-weight-bold"> Client: <span class="font-weight-normal">${cursor.value.client}</span></p>
+        <p class="font-weight-bold"> Telefon: <span class="font-weight-normal">${cursor.value.telefon}</span></p>
+        <p class="font-weight-bold"> Date: <span class="font-weight-normal">${cursor.value.date}</span></p>
+        <p class="font-weight-bold"> Hour: <span class="font-weight-normal">${cursor.value.hour}</span></p>
+        <p class="font-weight-bold"> Symptom: <span class="font-weight-normal">${cursor.value.symptom}</span></p>
+        `
+
+        // append to father
+        dating.appendChild(dateHTML)
+        cursor.continue()
+      }
+    }
+  }
+
 })
